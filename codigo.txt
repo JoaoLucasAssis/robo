@@ -1,0 +1,62 @@
+#include <Ultrasonic.h>
+#include <AFMotor.h>
+#define pi 3.14159265359
+
+Ultrasonic esqultrassom(A2, A5);
+Ultrasonic dirultrassom(A1, A3);
+Ultrasonic meioultrassom(A0, A4);
+
+AF_DCMotor motordir(1); // Motor direito
+AF_DCMotor motoresq(4); // Motor esquerdo
+
+long distesq; // Distância dos sensores
+long distdir;
+long distmeio;
+
+// Função que roda uma vez quando a placa é ligada ou resetada
+void setup() {
+  Serial.begin(9600); // Habilita Comunicação Serial
+  motordir.setSpeed(180); // Define a velocidade máxima dos motores
+  motoresq.setSpeed(180); 
+}
+
+// Função que se repete infinitamente
+void loop() {
+  distesq = esqultrassom.read(); // Uso do método read()
+  distdir = dirultrassom.read();
+  distmeio = meioultrassom.read();
+  
+  Serial.print("Distância Esquerda: ");
+  Serial.print(distesq);
+  Serial.print(" cm | Distância Direita: ");
+  Serial.print(distdir);
+  Serial.print(" cm | Distância Meio: ");
+  Serial.print(distmeio);
+  Serial.println(" cm");
+
+  // Lógica para movimento
+  if (distesq > 4 && distmeio > 4) { 
+    motoresq.run(BACKWARD); // Vira o motor esquerdo para trás
+    motordir.run(FORWARD); // Vira o motor direito para frente
+    delay(450); // Tempo para girar
+    motoresq.run(FORWARD); // Volta a andar para frente
+    motordir.run(FORWARD);
+  } 
+  else if (distmeio > 4) { 
+    motoresq.run(FORWARD);
+    motordir.run(FORWARD);
+  } 
+  else if (distdir > 4) { 
+    motordir.run(BACKWARD); // Vira o motor direito para trás
+    motoresq.run(FORWARD); // Vira o motor esquerdo para frente
+    delay(450); // Tempo para girar
+    motoresq.run(FORWARD); // Volta a andar para frente
+    motordir.run(FORWARD);
+  } 
+  else { 
+    motoresq.run(RELEASE);
+    motordir.run(RELEASE);
+  }
+
+  delay(100); // Delay para evitar leituras excessivas
+}
