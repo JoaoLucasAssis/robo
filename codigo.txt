@@ -1,62 +1,118 @@
+/******************************************************************************
+
+Grupo: Hugo, Igor, Jean e João
+Projeto de robô que sai do labirinto
+Links das bibliotecas:
+AF Motor: 
+
+Sensor HC-SR04:
+
+
+*******************************************************************************/
+/*// Programa: Arduino Motor Shield - Controle motores DC
+// Autor: Arduino e Cia
+ 
+// carrega a biblioteca AFMotor
+#include <AFMotor.h>
+// Define o motor1 ligado a conexao 1
+AF_DCMotor motor1(1); 
+// Define o motor2 ligado a conexao 4
+AF_DCMotor motor2(4); 
+ 
+void setup()
+{
+  // Define a velocidade maxima para os motores 1 e 2
+  motor1.setSpeed(255); 
+  motor2.setSpeed(255); 
+}
+ 
+void loop()
+{
+  // Aciona o motor 1 no sentido horario
+  motor1.run(FORWARD); 
+  // Aciona o motor 2 no sentido anti-horario
+  motor2.run(BACKWARD); 
+ 
+  // Aguarda 5 segundos
+  delay(2000);
+  // Desliga os 2 motores
+  motor1.run(RELEASE); 
+  motor2.run(RELEASE); 
+  // Aciona o motor 1 no sentido anti-horario
+  motor1.run(BACKWARD);
+  // Aciona o motor 2 no sentido horario
+  motor2.run(FORWARD); 
+ 
+  // Aguarda 5 segundos
+  delay(2000);
+  
+  // Desliga os 2 motores
+  motor1.run(RELEASE); 
+  motor2.run(RELEASE);
+}
+*/
+
+//Leitura de distância com o sensor HC-SR04
 #include <Ultrasonic.h>
 #include <AFMotor.h>
 #define pi 3.14159265359
 
-Ultrasonic esqultrassom(A2, A5);
-Ultrasonic dirultrassom(A1, A3);
-Ultrasonic meioultrassom(A0, A4);
+Ultrasonic esqultrassom(A2,A5);
+Ultrasonic dirultrassom(A1,A3);
+Ultrasonic meioultrassom(A0,A4); // define o nome do sensor(ultrassom)
+//e onde esta ligado o trig e o echo respectivamente
 
-AF_DCMotor motordir(1); // Motor direito
-AF_DCMotor motoresq(4); // Motor esquerdo
+AF_DCMotor motordir(1); // Define o motor1 ligado a conexao 1 como direito
+AF_DCMotor motoresq(4); // Define o motor2 ligado a conexao 4 como esquerdo
 
-long distesq; // Distância dos sensores
+long distesq; // distancia dos sensores
 long distdir;
 long distmeio;
 
-// Função que roda uma vez quando a placa é ligada ou resetada
+// Esta função "setup" roda uma vez quando a placa e ligada ou resetada
 void setup() {
-  Serial.begin(9600); // Habilita Comunicação Serial
-  motordir.setSpeed(180); // Define a velocidade máxima dos motores
+  Serial.begin(9600); //Habilita Comunicação Serial a uma taxa de 9600 bauds. (baud = velocidade)
+  motordir.setSpeed(180); // Define a velocidade maxima para os motores 1 e 2
   motoresq.setSpeed(180); 
-}
+ }
 
-// Função que se repete infinitamente
-void loop() {
-  distesq = esqultrassom.read(); // Uso do método read()
-  distdir = dirultrassom.read();
-  distmeio = meioultrassom.read();
-  
-  Serial.print("Distância Esquerda: ");
-  Serial.print(distesq);
-  Serial.print(" cm | Distância Direita: ");
-  Serial.print(distdir);
-  Serial.print(" cm | Distância Meio: ");
-  Serial.print(distmeio);
-  Serial.println(" cm");
-
-  // Lógica para movimento
-  if (distesq > 4 && distmeio > 4) { 
-    motoresq.run(BACKWARD); // Vira o motor esquerdo para trás
-    motordir.run(FORWARD); // Vira o motor direito para frente
-    delay(450); // Tempo para girar
-    motoresq.run(FORWARD); // Volta a andar para frente
-    motordir.run(FORWARD);
-  } 
-  else if (distmeio > 4) { 
-    motoresq.run(FORWARD);
-    motordir.run(FORWARD);
-  } 
-  else if (distdir > 4) { 
-    motordir.run(BACKWARD); // Vira o motor direito para trás
-    motoresq.run(FORWARD); // Vira o motor esquerdo para frente
-    delay(450); // Tempo para girar
-    motoresq.run(FORWARD); // Volta a andar para frente
-    motordir.run(FORWARD);
-  } 
-  else { 
-    motoresq.run(RELEASE);
-    motordir.run(RELEASE);
-  }
-
-  delay(100); // Delay para evitar leituras excessivas
-}
+// Função que se repete infinitamente quando a placa é ligada
+// Importante que o carro vira uma roda indo para trás e a outra para frente
+// Gira pra esquerda: esquerda para trás e direita pra frente,meia-volta: tanto faz
+// Quando for tomar alguma ação, é melhor parar ambas as rodas antes de mudar
+// o comportamento de alguma?
+ void loop()
+ {
+    distesq = esqultrassom.Ranging(CM);
+    distdir = dirultrassom.Ranging(CM);
+    distmeio = meioultrassom.Ranging(CM);// ultrassom.Ranging(CM) retorna a distancia em
+                                     // centímetros(CM) ou polegadas(INC)
+    Serial.print(distancia); //imprime o valor da variável distancia
+    Serial.println("cm");
+    if(distesq > 4){ 
+        // a distância n é 2, é o comprimento do carrinho
+        //delay(x); tempo que leva para centro do carrinho com velocidade máxima 
+            // andar metade da largura do caminho do labirinto
+            // ou seja, x = metade da largura do corredor / velocidade máxima
+        /* carrinho tem que virar 90 graus, para andar isso ele vira 1/4 de sua
+            circuferência, o que é 2 * pi * r /4, descobrir quanto é a velocidade máx
+            da roda do motor para esse cálculo e ver o tempo x que leva para tal */
+        motoresq.run(BACKWARD);
+        motoresq.run(FORWARD);
+        delay(450);
+    }
+    if(distmeio <= 4){
+        // a distância acima n deve ser dois e sim (larguracarro + largurracorredor) /2
+        // pra ele parar bem no meio da entrada pro corredor da esquerda
+        if(distdir > 4){ // vai pra direita girando 90º, mesma coisa da rotação p esquerda
+             motordir.run(BACKWARD);
+             motoresq.run(FORWARD);
+             delay(450);
+        }
+        else{ // dá meia volta girando 180º, qlqr motor pode ir pra trás
+             motordir.run(BACKWARD);
+             motoresq.run(FORWARD);
+             delay(900);
+        }
+    }
+ }
